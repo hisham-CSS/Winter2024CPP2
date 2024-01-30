@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.Windows;
 
 public class PlayerController : MonoBehaviour
 {
@@ -12,13 +14,61 @@ public class PlayerController : MonoBehaviour
 
     CharacterController cc;
     Animator anim;
+    Player playerInput;
+
+    Vector2 moveInput;
+    Vector3 desiredMoveDirection;
 
     public float YVelocity;
+    float prevMoveTime;
 
-    //Rigidbody rb;
+    private void Awake()
+    {
+        playerInput = new Player();
+
+        playerInput.Console.Move.performed += MovePerformed;
+        playerInput.Console.Jump.performed += ctx => JumpPressed();
+        playerInput.Console.Attack.performed += ctx => AttackPressed();
+    }
+
+    private void OnEnable()
+    {
+        playerInput.Enable();
+    }
+
+    private void OnDisable()
+    {
+        playerInput.Disable();        
+    }
+
+    void JumpPressed()
+    {
+        if (cc.isGrounded)
+            YVelocity = jumpSpeed;
+    }
+
+    void AttackPressed()
+    {
+        AnimatorClipInfo[] clipInfo = anim.GetCurrentAnimatorClipInfo(0);
+
+        if (clipInfo[0].clip.name != "CrossPunch")
+            anim.SetTrigger("Attack");
+        
+    }
+
+    void MovePerformed(InputAction.CallbackContext ctx)
+    {
+        moveInput = ctx.ReadValue<Vector2>();
+
+        //set our animation and move
+        anim.SetFloat("Speed", moveInput.magnitude);
+    }
+
     // Start is called before the first frame update
     void Start()
     {
+        
+
         try
         {
             cc = GetComponent<CharacterController>();
@@ -38,23 +88,11 @@ public class PlayerController : MonoBehaviour
         {
             Debug.Log(e.ToString());
         }
-        
-        //rb = GetComponent<Rigidbody>();
-        //GameManager.Instance.TestGameManager();
     }
 
     // Update is called once per frame
     void Update()
     {
-        //YVelocity = cc.velocity.y;
-
-        //Grabbing our inputs
-        float hInput = Input.GetAxis("Horizontal");
-        float fInput = Input.GetAxis("Vertical");
-
-        //making a dir value to be used for animation
-        Vector3 dir = new Vector3(hInput, 0, fInput);
-
         //grabing camera foward and right vectors for camera relative movement
         Vector3 cameraForward = Camera.main.transform.forward;
         Vector3 cameraRight = Camera.main.transform.right;
@@ -68,7 +106,7 @@ public class PlayerController : MonoBehaviour
         cameraRight.Normalize();
 
         //Vector projection formula 
-        Vector3 desiredMoveDirection = cameraForward * fInput + cameraRight * hInput;
+        Vector3 desiredMoveDirection = cameraForward * moveInput.y + cameraRight * moveInput.x;
 
         //when we are not moving - we do not rotate
         if (desiredMoveDirection.magnitude > 0)
@@ -79,33 +117,27 @@ public class PlayerController : MonoBehaviour
 
         //add a speed to our direction so we do not just use normalized values - because we are in update we need to multiply by Time.deltaTime
         desiredMoveDirection *= speed * Time.deltaTime;
-        //desiredMoveDirection.y -= gravity;
 
         //Y Velocity is set to zero if we are grounded - otherwise add gravity
         YVelocity = (!cc.isGrounded) ? YVelocity -= gravity * Time.deltaTime : 0;
 
-        //if we jump affect y velocity again
-        if (cc.isGrounded && Input.GetButtonDown("Jump"))
-        {
-            //moveInput.y = jumpSpeed;
-            YVelocity = jumpSpeed;
-        }
-
-        //
+        //set our gravity
         desiredMoveDirection.y = YVelocity;
 
-        anim.SetFloat("Speed", dir.magnitude);
+        ////set our animation and move
+        //anim.SetFloat("Speed", dir.magnitude);
+        Debug.Log(desiredMoveDirection);
         cc.Move(desiredMoveDirection);
 
 
-        Ray ray = new Ray(transform.position, transform.forward);
-        RaycastHit hitInfo;
+        //Ray ray = new Ray(transform.position, transform.forward);
+        //RaycastHit hitInfo;
 
-        Debug.DrawLine(transform.position, (transform.position) + (transform.forward) * 10.0f, Color.red);
-        if (Physics.Raycast(ray, out hitInfo, 10.0f, enemyCheck))
-        {
-            Debug.Log(hitInfo);
-        }
+        //Debug.DrawLine(transform.position, (transform.position) + (transform.forward) * 10.0f, Color.red);
+        //if (Physics.Raycast(ray, out hitInfo, 10.0f, enemyCheck))
+        //{
+        //    Debug.Log(hitInfo);
+        //}
     }
 
     private void OnControllerColliderHit(ControllerColliderHit hit)
