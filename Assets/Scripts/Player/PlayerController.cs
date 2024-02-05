@@ -17,10 +17,8 @@ public class PlayerController : MonoBehaviour
     Player playerInput;
 
     Vector2 moveInput;
-    Vector3 desiredMoveDirection;
 
     public float YVelocity;
-    float prevMoveTime;
 
     private void Awake()
     {
@@ -67,8 +65,6 @@ public class PlayerController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
-
         try
         {
             cc = GetComponent<CharacterController>();
@@ -124,9 +120,7 @@ public class PlayerController : MonoBehaviour
         //set our gravity
         desiredMoveDirection.y = YVelocity;
 
-        ////set our animation and move
-        //anim.SetFloat("Speed", dir.magnitude);
-        Debug.Log(desiredMoveDirection);
+        ////set our an move
         cc.Move(desiredMoveDirection);
 
 
