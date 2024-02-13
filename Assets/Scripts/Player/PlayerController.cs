@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.HID;
 using UnityEngine.Windows;
 
 public class PlayerController : MonoBehaviour
@@ -12,11 +13,12 @@ public class PlayerController : MonoBehaviour
     public float jumpSpeed = 10.0f;
     public LayerMask enemyCheck;
 
-    CharacterController cc;
-    Animator anim;
-    Player playerInput;
+    private CharacterController cc;
+    private Animator anim;
+    private Player playerInput;
+    private Health playerHealth;
 
-    Vector2 moveInput;
+    private Vector2 moveInput;
 
     public float YVelocity;
 
@@ -69,6 +71,7 @@ public class PlayerController : MonoBehaviour
         {
             cc = GetComponent<CharacterController>();
             anim = GetComponentInChildren<Animator>();
+            playerHealth = GetComponent<Health>();
 
             if (speed < 0)
             {
@@ -137,5 +140,18 @@ public class PlayerController : MonoBehaviour
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
         
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        if (other.CompareTag("Healing"))
+        {
+            playerHealth.IncreaseHealth(1);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        //GameOver logic goes here
     }
 }
